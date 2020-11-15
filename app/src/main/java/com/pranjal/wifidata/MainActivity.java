@@ -32,26 +32,33 @@ import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
-    private Button wifiButton;
+    private CheckBox wifiButton;
     private WifiManager wifiManager;
     private WifiRepository wifiRepository;
     private SensorManager sensorManager;
     private BroadcastReceiver wifiScanReceiver;
-    private Button magneticButton;
+    private CheckBox magneticButton;
     Context context = this;
-    private Button gsmButton;
+    private CheckBox gsmButton;
     private TelephonyManager telephonyManager;
     private Button syncButton;
+    private Button startButton;
+    private Button stopButton;
     String [] appPermissions = {Manifest.permission.READ_PHONE_STATE,Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.WRITE_EXTERNAL_STORAGE};
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,12 +67,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         checkForPermissions();
         wifiButton = findViewById(R.id.startwifi);
         wifiRepository = new WifiRepository(getApplication());
-        wifiButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                getWifiData();
-            }
-        });
         wifiManager = (WifiManager)
                 context.getSystemService(Context.WIFI_SERVICE);
 
@@ -77,20 +78,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         };
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         magneticButton = findViewById(R.id.startmagnetic);
-        magneticButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                getSensorData();
-            }
-        });
         gsmButton = findViewById(R.id.startgsm);
-        gsmButton.setOnClickListener(new View.OnClickListener() {
-            @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
-            @Override
-            public void onClick(View view) {
-                getGsmData();
-            }
-        });
         telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         syncButton = findViewById(R.id.sync);
         syncButton.setOnClickListener(new View.OnClickListener() {
@@ -100,55 +88,52 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     sync();
                 } catch (ExecutionException e) {
                     e.printStackTrace();
-                } catch (InterruptedException | IOException e) {
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
         });
+        startButton = findViewById(R.id.start);
+        stopButton  = findViewById(R.id.stop);
+        startButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                start();
+            }
+        });
+        stopButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                stop();
+            }
+        });
     }
 
-    private void sync() throws ExecutionException, InterruptedException, IOException {
+    private void stop() {
+        if(wifiButton.isChecked()){
+            context.unregisterReceiver(wifiScanReceiver);
+        }
+        if(magneticButton.isChecked()){
+            sensorManager.unregisterListener(this);
+        }
+        startButton.setVisibility(View.VISIBLE);
+    }
+
+    private void start() {
+        if(wifiButton.isChecked()){
+            getWifiData();
+        }
+        if(magneticButton.isChecked()){
+            getSensorData();
+        }
+        startButton.setVisibility(View.INVISIBLE);
+    }
+
+    private void sync() throws ExecutionException, InterruptedException {
         List<wifi> l = wifiRepository.getallwifi();
-      List<Magnetic> l2 = wifiRepository.getallmagnetic();
+        List<Magnetic> l2 = wifiRepository.getallmagnetic();
         List<gsm> l3 = wifiRepository.getallgsm();
-        File exportDir = new File(Environment.getExternalStorageDirectory(), "");
-        if (!exportDir.exists()) {
-            exportDir.mkdirs();
-        }
-        File file = new File(exportDir,"file1" + ".csv");
-        File file2 = new File(exportDir,"file2" + ".csv");
-        file2.createNewFile();
-        File file3 = new File(exportDir,"file3" + ".csv");
-        file3.createNewFile();
-        file.createNewFile();
-        CSVWriter csvWrite = new CSVWriter(new FileWriter(file));
-        for(wifi w:l){
-            String arrStr[] = new String[4];
-            arrStr[0] =""+w.id;
-            arrStr[1]=w.ssid;
-            arrStr[2]=""+w.frequency;
-            arrStr[3]=""+w.level;
-            csvWrite.writeNext(arrStr);
-        }
-        csvWrite.close();
-        CSVWriter csvWriter2 = new CSVWriter(new FileWriter(file2));
-        for(gsm g:l3){
-            String arrStr[] = new String[2];
-            arrStr[0]=""+g.id;
-            arrStr[1]=""+g.strength;
-            csvWriter2.writeNext(arrStr);
-        }
-        csvWriter2.close();
-        CSVWriter csvWriter = new CSVWriter(new FileWriter(file3));
-        for(Magnetic m:l2){
-            String arrStr[] = new String[4];
-            arrStr[0]=""+m.id;
-            arrStr[1]=""+m.magx;
-            arrStr[2]=""+m.magy;
-            arrStr[3]=""+m.magz;
-            csvWriter.writeNext(arrStr);
-        }
-        csvWriter.close();
+        new Writer(l,l2,l3,context).execute();
         Toast.makeText(this,"Exported",Toast.LENGTH_LONG).show();
     }
 
@@ -190,6 +175,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
+
         CellInfo cellInfo = telephonyManager.getAllCellInfo().get(0);
         int t= 0;
         if (cellInfo instanceof CellInfoCdma) {
@@ -202,13 +188,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             t =  ((CellInfoLte) cellInfo).getCellSignalStrength().getDbm();
         }
 
-        gsm g = new gsm(t);
+        gsm g = new gsm(t,getTime());
         wifiRepository.insertGSM(g);
-        Toast.makeText(this,"Updated" ,Toast.LENGTH_LONG).show();
     }
 
     private void getWifiData() {
-        wifiButton.setVisibility(View.INVISIBLE);
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
         context.registerReceiver(wifiScanReceiver, intentFilter);
@@ -218,9 +202,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             Toast.makeText(this,"Scan Failed",Toast.LENGTH_LONG).show();
             scanFailure();
         }
-        else{
-            Toast.makeText(this,"Passed",Toast.LENGTH_LONG).show();
-        }
+
 
     }
     private void getSensorData(){
@@ -231,21 +213,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private void scanSuccess(){
         List<ScanResult> results = wifiManager.getScanResults();
         if(results.size()==0){
-            Toast.makeText(this,"No WIFI Found",Toast.LENGTH_LONG).show();
-            wifiButton.setVisibility(View.VISIBLE);
-            context.unregisterReceiver(wifiScanReceiver);
             return;
         }
         for (ScanResult s: results){
             String ssid = s.SSID;
             int frequency = s.frequency;
             int level = s.level;
-            wifi w = new wifi(ssid,frequency,level);
+            wifi w = new wifi(ssid,frequency,level,getTime());
             wifiRepository.insert(w);
         }
-        Toast.makeText(this,"Updated",Toast.LENGTH_LONG).show();
-        wifiButton.setVisibility(View.VISIBLE);
-        context.unregisterReceiver(wifiScanReceiver);
+
     }
 
     private void scanFailure() {
@@ -253,22 +230,31 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         wifiButton.setVisibility(View.VISIBLE);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         if(sensorEvent.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD){
             float magX = sensorEvent.values[0];
             float magY = sensorEvent.values[1];
             float magZ = sensorEvent.values[2];
-            Magnetic m = new Magnetic(magX, magY, magZ);
+            Magnetic m = new Magnetic(magX, magY, magZ,getTime());
             wifiRepository.insertMagnetic(m);
-            Toast.makeText(this,"Updated",Toast.LENGTH_LONG).show();
-            sensorManager.unregisterListener(this);
+            if(gsmButton.isChecked()){
+                getGsmData();
+            }
         }
     }
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
 
+    }
+
+    public String getTime(){
+        Date date = Calendar.getInstance().getTime();
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
+        String str = dateFormat.format(date);
+        return str;
     }
 
 

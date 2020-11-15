@@ -1,5 +1,6 @@
 package com.pranjal.wifidata;
 
+
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
@@ -11,8 +12,11 @@ public class gsm {
     public int id;
     @ColumnInfo(name="strength")
     public int strength;
+    @ColumnInfo(name ="time")
+    public String time;
 
-    public gsm(int strength){
+    public gsm(int strength,String time){
         this.strength = strength;
+        this.time = time;
     }
 }

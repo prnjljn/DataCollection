@@ -22,10 +22,15 @@ public class wifi {
     @ColumnInfo(name = "level")
     public int level;
 
-    public wifi (String ssid,int frequency,int level){
+    @NonNull
+    @ColumnInfo(name ="time")
+    public String time;
+
+    public wifi (String ssid,int frequency,int level,String time){
         this.frequency=frequency;
         this.ssid=ssid;
         this.level = level;
+        this.time = time;
     }
 
 }

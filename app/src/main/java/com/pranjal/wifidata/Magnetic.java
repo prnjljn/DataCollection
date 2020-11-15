@@ -1,5 +1,6 @@
 package com.pranjal.wifidata;
 
+
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
@@ -16,10 +17,13 @@ public class Magnetic {
     public double magy;
     @ColumnInfo(name="magz")
     public double magz;
+    @ColumnInfo(name ="time")
+    public String time;
 
-    public Magnetic(double magx,double magy,double magz){
+    public Magnetic(double magx,double magy,double magz,String time){
         this.magx = magx;
         this.magy = magy;
         this.magz = magz;
+        this.time = time;
     }
 }
