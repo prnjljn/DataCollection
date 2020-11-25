@@ -6,7 +6,7 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
-@Database(entities = {wifi.class,Magnetic.class,gsm.class}, version = 5, exportSchema = false)
+@Database(entities = {wifi.class,Magnetic.class,gsm.class}, version = 6, exportSchema = false)
 public abstract class WifiRoomDatabase extends RoomDatabase {
     public abstract wifiDao wifiDao();
     public abstract magneticDao magneticDao();

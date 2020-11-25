@@ -14,11 +14,13 @@ public class Writer extends AsyncTask<Void, Void, Void> {
     List<Magnetic> l2;
     List<gsm> l3;
     Context c;
-    Writer (List<wifi> w,List<Magnetic> m,List<gsm> g,Context context){
+    String location;
+    Writer (List<wifi> w,List<Magnetic> m,List<gsm> g,Context context,String loc){
         l=w;
         l2=m;
         l3=g;
         c=context;
+        location=loc;
     }
     @Override
     protected Void doInBackground(Void... voids) {
@@ -26,14 +28,14 @@ public class Writer extends AsyncTask<Void, Void, Void> {
         if (!exportDir.exists()) {
             exportDir.mkdirs();
         }
-        File file = new File(exportDir,"file1" + ".csv");
-        File file2 = new File(exportDir,"file2" + ".csv");
+        File file = new File(exportDir,"file1" +location+ ".csv");
+        File file2 = new File(exportDir,"file2" +location+ ".csv");
         try {
             file2.createNewFile();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        File file3 = new File(exportDir,"file3" + ".csv");
+        File file3 = new File(exportDir,"file3" +location+ ".csv");
         try {
             file3.createNewFile();
         } catch (IOException e) {
@@ -51,12 +53,13 @@ public class Writer extends AsyncTask<Void, Void, Void> {
             e.printStackTrace();
         }
         for(wifi w:l){
-            String arrStr[] = new String[5];
+            String arrStr[] = new String[6];
             arrStr[0] =""+w.id;
             arrStr[1]=w.ssid;
             arrStr[2]=""+w.frequency;
             arrStr[3]=""+w.level;
             arrStr[4]=""+w.time;
+            arrStr[5]=""+w.bssid;
             csvWrite.writeNext(arrStr);
         }
         try {
@@ -71,10 +74,11 @@ public class Writer extends AsyncTask<Void, Void, Void> {
             e.printStackTrace();
         }
         for(gsm g:l3){
-            String arrStr[] = new String[3];
+            String arrStr[] = new String[4];
             arrStr[0]=""+g.id;
             arrStr[1]=""+g.strength;
             arrStr[2]=""+g.time;
+            arrStr[3]=""+g.cid;
             csvWriter2.writeNext(arrStr);
         }
         try {

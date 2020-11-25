@@ -10,6 +10,6 @@ import java.util.List;
 public interface gsmDao {
     @Insert
     void insert(gsm g);
-    @Query("SELECT * FROM gsm")
-    List<gsm> getAllGSM();
+    @Query("SELECT * FROM gsm WHERE location = :loc")
+    List<gsm> getAllGSM(String loc);
 }

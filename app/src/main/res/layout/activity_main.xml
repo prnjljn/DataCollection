@@ -26,12 +26,30 @@
         android:id="@+id/startgsm"
         android:layout_below="@+id/startmagnetic"
         />
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/startgsm"
+        android:orientation="horizontal"
+        android:id="@+id/ll"
+        >
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Location : "/>
+        <EditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/location"
+            android:hint="Enter location"/>
+    </LinearLayout>
+
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Start"
         android:id="@+id/start"
-        android:layout_below="@+id/startgsm"/>
+        android:layout_below="@+id/ll"/>
     <Button
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"

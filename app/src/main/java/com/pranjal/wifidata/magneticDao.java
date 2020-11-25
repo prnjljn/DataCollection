@@ -10,6 +10,6 @@ import java.util.List;
 public interface magneticDao {
     @Insert
     void insert(Magnetic m);
-    @Query("SELECT * FROM magentic_field")
-    List<Magnetic> getAllMagnetic();
+    @Query("SELECT * FROM magentic_field WHERE location = :loc")
+    List<Magnetic> getAllMagnetic(String loc);
 }

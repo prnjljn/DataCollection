@@ -11,6 +11,8 @@ public class wifi {
     @ColumnInfo(name="id")
     public int id;
     @NonNull
+    @ColumnInfo(name = "bssid")
+    public String bssid;
     @ColumnInfo(name = "ssid")
     public String ssid;
 
@@ -25,12 +27,16 @@ public class wifi {
     @NonNull
     @ColumnInfo(name ="time")
     public String time;
+    @ColumnInfo(name="location")
+    public String location;
 
-    public wifi (String ssid,int frequency,int level,String time){
+    public wifi (String bssid,String ssid,int frequency,int level,String time,String location){
         this.frequency=frequency;
         this.ssid=ssid;
         this.level = level;
         this.time = time;
+        this.location = location;
+        this.bssid = bssid;
     }
 
 }

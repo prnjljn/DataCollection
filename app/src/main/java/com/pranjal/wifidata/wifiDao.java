@@ -10,7 +10,7 @@ import java.util.List;
 public interface wifiDao {
     @Insert
     void insert(wifi w);
-    @Query("SELECT * FROM wifi_table")
-    List<wifi> getAllWifi();
+    @Query("SELECT * FROM wifi_table WHERE location = :loc")
+    List<wifi> getAllWifi(String loc);
 
 }

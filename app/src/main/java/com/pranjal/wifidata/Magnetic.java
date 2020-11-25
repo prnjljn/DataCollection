@@ -19,11 +19,13 @@ public class Magnetic {
     public double magz;
     @ColumnInfo(name ="time")
     public String time;
-
-    public Magnetic(double magx,double magy,double magz,String time){
+    @ColumnInfo(name="location")
+    public String location;
+    public Magnetic(double magx,double magy,double magz,String time,String location){
         this.magx = magx;
         this.magy = magy;
         this.magz = magz;
         this.time = time;
+        this.location=location;
     }
 }

@@ -21,14 +21,14 @@ public class WifiRepository {
         mgsmDao = db.gsmDao();
     }
 
-    public List<wifi> getallwifi() throws ExecutionException, InterruptedException {
-        return new wifiTask((mWifiDao)).execute().get();
+    public List<wifi> getallwifi(String loc) throws ExecutionException, InterruptedException {
+        return new wifiTask((mWifiDao),loc).execute().get();
     }
-    public List<gsm> getallgsm() throws ExecutionException, InterruptedException {
-        return new gsmTask(mgsmDao).execute().get();
+    public List<gsm> getallgsm(String loc) throws ExecutionException, InterruptedException {
+        return new gsmTask(mgsmDao,loc).execute().get();
     }
-    public List<Magnetic> getallmagnetic() throws ExecutionException, InterruptedException {
-        return new magneticTask(mmagneticDao).execute().get();
+    public List<Magnetic> getallmagnetic(String loc) throws ExecutionException, InterruptedException {
+        return new magneticTask(mmagneticDao,loc).execute().get();
     }
 
 
@@ -86,37 +86,40 @@ public class WifiRepository {
 
     private static class wifiTask extends  AsyncTask<Void,Void,List<wifi>>{
         private wifiDao mAsyncTaskDao;
-
-        wifiTask(wifiDao dao) {
+        private String location;
+        wifiTask(wifiDao dao,String loc) {
             mAsyncTaskDao = dao;
+            location = loc;
         }
         @Override
         protected List<wifi> doInBackground(Void... voids) {
-            return mAsyncTaskDao.getAllWifi();
+            return mAsyncTaskDao.getAllWifi(location);
         }
     }
 
     private static class gsmTask extends  AsyncTask<Void,Void,List<gsm>>{
         private gsmDao mAsyncTaskDao;
-
-        gsmTask(gsmDao dao) {
+        private String location;
+        gsmTask(gsmDao dao,String loc) {
             mAsyncTaskDao = dao;
+            location = loc;
         }
         @Override
         protected List<gsm> doInBackground(Void... voids) {
-            return mAsyncTaskDao.getAllGSM();
+            return mAsyncTaskDao.getAllGSM(location);
         }
     }
 
     private static class magneticTask extends  AsyncTask<Void,Void,List<Magnetic>>{
         private magneticDao mAsyncTaskDao;
-
-        magneticTask(magneticDao dao) {
+        private String location;
+        magneticTask(magneticDao dao,String loc) {
             mAsyncTaskDao = dao;
+            location =loc;
         }
         @Override
         protected List<Magnetic> doInBackground(Void... voids) {
-            return mAsyncTaskDao.getAllMagnetic();
+            return mAsyncTaskDao.getAllMagnetic(location);
         }
     }
 }

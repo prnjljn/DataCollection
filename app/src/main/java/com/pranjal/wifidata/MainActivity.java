@@ -33,6 +33,7 @@ import android.telephony.TelephonyManager;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import java.io.File;
@@ -59,6 +60,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private Button syncButton;
     private Button startButton;
     private Button stopButton;
+    private String location;
+    private EditText locationEditText;
     String [] appPermissions = {Manifest.permission.READ_PHONE_STATE,Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.WRITE_EXTERNAL_STORAGE};
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,6 +110,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 stop();
             }
         });
+        locationEditText = findViewById(R.id.location);
     }
 
     private void stop() {
@@ -127,13 +131,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             getSensorData();
         }
         startButton.setVisibility(View.INVISIBLE);
+        location = locationEditText.getText().toString();
     }
 
     private void sync() throws ExecutionException, InterruptedException {
-        List<wifi> l = wifiRepository.getallwifi();
-        List<Magnetic> l2 = wifiRepository.getallmagnetic();
-        List<gsm> l3 = wifiRepository.getallgsm();
-        new Writer(l,l2,l3,context).execute();
+        List<wifi> l = wifiRepository.getallwifi(location);
+        List<Magnetic> l2 = wifiRepository.getallmagnetic(location);
+        List<gsm> l3 = wifiRepository.getallgsm(location);
+        new Writer(l,l2,l3,context,location).execute();
         Toast.makeText(this,"Exported",Toast.LENGTH_LONG).show();
     }
 
@@ -178,17 +183,21 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         CellInfo cellInfo = telephonyManager.getAllCellInfo().get(0);
         int t= 0;
+        int cid=0;
         if (cellInfo instanceof CellInfoCdma) {
             t = ((CellInfoCdma) cellInfo).getCellSignalStrength().getDbm();
+            cid = ((CellInfoCdma) cellInfo).getCellIdentity().getBasestationId();
         }
         if (cellInfo instanceof CellInfoGsm) {
             t =  ((CellInfoGsm) cellInfo).getCellSignalStrength().getDbm();
+            cid = ((CellInfoGsm) cellInfo).getCellIdentity().getCid();
         }
         if (cellInfo instanceof CellInfoLte) {
             t =  ((CellInfoLte) cellInfo).getCellSignalStrength().getDbm();
+            cid = ((CellInfoLte) cellInfo).getCellIdentity().getCi();
         }
 
-        gsm g = new gsm(t,getTime());
+        gsm g = new gsm(cid,t,getTime(),location);
         wifiRepository.insertGSM(g);
     }
 
@@ -219,7 +228,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             String ssid = s.SSID;
             int frequency = s.frequency;
             int level = s.level;
-            wifi w = new wifi(ssid,frequency,level,getTime());
+            String bssid = s.BSSID;
+            wifi w = new wifi(bssid,ssid,frequency,level,getTime(),location);
             wifiRepository.insert(w);
         }
 
@@ -237,7 +247,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             float magX = sensorEvent.values[0];
             float magY = sensorEvent.values[1];
             float magZ = sensorEvent.values[2];
-            Magnetic m = new Magnetic(magX, magY, magZ,getTime());
+            Magnetic m = new Magnetic(magX, magY, magZ,getTime(),location);
             wifiRepository.insertMagnetic(m);
             if(gsmButton.isChecked()){
                 getGsmData();
